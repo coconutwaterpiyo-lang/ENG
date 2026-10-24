@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Live Stream Player - Doraemon</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Shaka Player CDN -->
+  <script src="https://ajax.googleapis.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    .player-container {
+      position: relative;
+      width: 100%;
+      background: black;
+    }
+    #video {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: black;
+    }
+    .watermark {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      color: rgba(255,255,255,0.85);
+      font-size: 11px;
+      font-weight: bold;
+      z-index: 9999;
+      text-decoration: none;
+      background: rgba(0,0,0,0.5);
+      padding: 3px 7px;
+      border-radius: 4px;
+      user-select: none;
+    }
+    .watermark img { width: 13px; height: 13px; }
+    .watermark:hover { background: rgba(0,0,0,0.7); }
+
+    .whatsapp-box {
+      width: 100%;
+      text-align: center;
+      background: #1c1c1c;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+    .whatsapp-box a {
+      display: inline-block;
+      background: #25D366;
+      color: #fff;
+      text-decoration: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .whatsapp-box a:hover { background: #128C7E; }
+
+    #errorBox {
+      display: none;
+      background: #400;
+      color: #fff;
+      padding: 12px;
+      font-size: 13px;
+      margin: 8px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="player-container">
+    <video id="video" controls autoplay muted playsinline></video>
+
+    <a class="watermark" href="https://whatsapp.com/channel/0029Vb7n2ZBGE56cha5K7K3Z" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA">
+      𝑫𝒐𝒓𝒂𝒆𝒎𝒐𝒏
+    </a>
+  </div>
+
+  <div id="errorBox"></div>
+
+  <div class="whatsapp-box">
+    <a href="https://whatsapp.com/channel/0029Vb7n2ZBGE56cha5K7K3Z" target="_blank">JOIN WHATSAPP FOR MORE LIVE LINKS</a>
+  </div>
+
+  <script>
+    const MANIFEST_URI = "https://otte.live.fly.ww.aiv-cdn.net/lhr-nitro/live/clients/dash/enc/di53wexuc7/out/v1/40b0a31c1c5b4f4aa41286cb1313cf87/cenc.mpd";
+    const KEY_ID = "01501c3401dabab0e68c1d58b2ed5bde";
+    const KEY    = "4c1167220c5d1358d630245281ceba58";
+
+    const video = document.getElementById('video');
+    const errorBox = document.getElementById('errorBox');
+
+    function showError(msg) {
+      errorBox.style.display = 'block';
+      errorBox.textContent = msg;
+      console.error(msg);
+    }
+
+    async function initPlayer() {
+      // Install polyfills (necessary for older browsers)
+      shaka.polyfill.installAll();
+
+      if (!shaka.Player.isBrowserSupported()) {
+        showError("❌ Browser Shaka Player support nahi karta. Chrome/Firefox latest use karo.");
+        return;
+      }
+
+      // Create player
+      const player = new shaka.Player();
+      await player.attach(video);
+
+      // Attach error listener
+      player.addEventListener('error', (e) => {
+        const err = e.detail;
+        showError("Shaka Error [" + err.code + "]: " + err.message);
+      });
+
+      // ClearKey DRM configure
+      player.configure({
+        drm: {
+          clearKeys: {
+            [KEY_ID]: KEY
+          }
+        },
+        streaming: {
+          lowLatencyMode: true
+        }
+      });
+
+      try {
+        await player.load(MANIFEST_URI);
+        console.log("✅ Stream loaded successfully!");
+        video.play().catch(e => console.warn("Autoplay blocked:", e));
+      } catch (e) {
+        showError("❌ Load fail: " + (e.code || '') + " — " + (e.message || e));
+      }
+    }
+
+    initPlayer().catch(e => showError("Init error: " + e.message));
+  </script>
+
+</body>
+</html>
